@@ -1,8 +1,10 @@
 import numpy as np
 import random
 from loguru import logger
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional
 from src.intensity_functions import create_intensity_function
+from src.orders import Order, OrderType, OrderSide
+from collections import defaultdict
 
 
 class QueueReactiveModel:
@@ -110,7 +112,8 @@ class QueueReactiveModel:
     def get_reference_price(self) -> float:
         return self.reference_price
 
-# You might want to add the following classes if you decide to implement them:
+
+# might want to implement the following classes asp:
 # class IntensityFunction:
 #     def __init__(self, function_type: str):
 #         self.function_type = function_type
@@ -127,3 +130,25 @@ class QueueReactiveModel:
 #
 # class MarketOrderIntensity(IntensityFunction):
 #     pass
+
+class OrderBook:
+    def __init__(self, tick_size: float):
+        self.tick_size = tick_size
+        self.bids: Dict[float, List[Order]] = defaultdict(list)
+        self.asks: Dict[float, List[Order]] = defaultdict(list)
+        self.order_id_to_price: Dict[int, float] = {}
+
+    def add_order(self, order: Order) -> None:
+        if order.type != OrderType.LIMIT:
+            raise ValueError(
+                "Only limit orders can be added to the order book")  # market orders are filled instantly,
+            # cancelations are removed instantly.
+
+        price = round(order.price / self.tick_size) + self.tick_size
+        if order.side == OrderSide.BUY:
+            self.bids[price].append(order)  # if it's a buy order add it and its prcie to buy orders
+        else:
+            self.asks[price].append(
+                order)  # if it's not a buy order it must be a sell order and add it and its price to sell orders
+        self.order_id_to_price[id(order)] = price
+
