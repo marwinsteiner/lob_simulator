@@ -1,4 +1,4 @@
-# Steps we will folllow to get going
+# Steps we will follow to get going
 
 Step 1: Set up the Python project structure
 
