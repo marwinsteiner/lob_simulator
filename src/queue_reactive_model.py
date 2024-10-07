@@ -167,3 +167,33 @@ class OrderBook:
                 return side[price].pop(i)
 
         return None
+
+    def match_market_order(self , order: Order) -> List[Order]:
+        matched_orders = []
+        remaining_volume = order.volume
+
+        side = self.asks if order.side == OrderSide.BUY else self.bids
+        prices = sorted(side.keys(), reverse=(order.side == OrderSide.BUY))
+
+        for price in prices:
+            while side[price] and remaining_volume > 0:
+                matched_order = side[price][0]
+                matched_volume = min(matched_order.volume, remaining_volume)
+
+                matched_orders.append(Order(
+                    type=OrderType.MARKET,
+                    side=order.side,
+                    price=price,
+                    volume=matched_volume
+                ))
+
+                remaining_volume -= matched_volume
+                matched_order.volume -= matched_volume
+
+                if matched_order.volume == 0:
+                    self.cancel_order(id(matched_order))
+
+            if remaining_volume == 0:
+                break
+
+        return matched_orders
