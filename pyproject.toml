@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "lob-simulator"
+version = "0.1.0"
+description = "Simulating a Limit Order Book (LOB) based on Simulating and analyzing order book data: The queue-reactive model (2015) by Rosenbaum et al."
+authors = ["Marwin Steiner <marwin.steiner@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+dynaconf = "^3.2.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
