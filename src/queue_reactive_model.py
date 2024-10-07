@@ -2,6 +2,7 @@ import numpy as np
 import random
 from loguru import logger
 from typing import List, Tuple
+from src.intensity_functions import create_intensity_function
 
 
 class QueueReactiveModel:
@@ -17,6 +18,10 @@ class QueueReactiveModel:
         self.theta_reinit = theta_reinit  # Probability of LOB state reinitialization
         self.reference_price = 0.0
         self.order_book_state = np.zeros(2 * K, dtype=int)
+
+        self.limit_order_intensity = create_intensity_function('limit_order', base_intensity=1.0, alpha=0.5)
+        self.cancellation_intensity = create_intensity_function('cancellation', mu=0.1)
+        self.market_order_intensity = create_intensity_function('market_order', theta=0.05)
 
         logger.info(
             f"Initialized QueueReactiveModel with K={K}, delta={delta}, theta={theta}, theta_reinit={theta_reinit}")
@@ -66,8 +71,19 @@ class QueueReactiveModel:
         logger.info(f"Cancelled order: side={side}, level={level}, volume={volume}")
 
     def get_intensity(self, event_type: str, side: str, level: int) -> float:
-        # This is a placeholder. In a real implementation, you would compute the intensity based on the current state.
-        return random.random()
+        queue_size = self.get_queue_size(side, level)
+        if event_type == 'limit':
+            return self.limit_order_intensity(queue_size)
+        elif event_type == 'cancel':
+            return self.cancellation_intensity(queue_size)
+        elif event_type == 'market':
+            return self.market_order_intensity(queue_size)
+        else:
+            raise ValueError(f"Unknown event type: {event_type}")
+
+    def get_queue_size(self, side: str, level: int) -> int:
+        index = self.K + level if side == 'bid' else self.K - 1 - level
+        return self.order_book_state[index]
 
     def simulate_next_event(self) -> Tuple[str, str, int, int]:
         event_type = random.choice(['limit', 'market', 'cancel'])
