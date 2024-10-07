@@ -197,3 +197,13 @@ class OrderBook:
                 break
 
         return matched_orders
+
+    def get_best_bid(self) -> Optional[float]:
+        return max(self.bids.keys()) if self.bids else None  # if there are no orders there isn't anything to return
+        # (None)
+
+    def get_best_ask(self) -> Optional[float]:
+        return min(self.asks.keys()) if self.asks else None  # if there are no orders there isn't anything to return
+        # (None)
+
+
