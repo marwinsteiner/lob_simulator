@@ -1,9 +1,16 @@
 import numpy as np
+import random
+from loguru import logger
 from typing import List, Tuple
 
 
 class QueueReactiveModel:
     def __init__(self, K: int, delta: float, theta: float, theta_reinit: float):
+        if not all(isinstance(x, (int, float)) for x in [K, delta, theta, theta_reinit]):
+            raise ValueError("All parameters must be numeric")
+        if K <= 0 or delta <= 0 or not 0 <= theta <= 1 or not 0 <= theta_reinit <= 1:
+            raise ValueError("Invalid parameter values")
+
         self.K = K  # Number of price levels on each side
         self.delta = delta  # Tick size
         self.theta = theta  # Probability of reference price change
@@ -11,64 +18,96 @@ class QueueReactiveModel:
         self.reference_price = 0.0
         self.order_book_state = np.zeros(2 * K, dtype=int)
 
+        logger.info(
+            f"Initialized QueueReactiveModel with K={K}, delta={delta}, theta={theta}, theta_reinit={theta_reinit}")
+
     def initialize_order_book(self):
-        # Initialize the order book state
-        pass
+        self.order_book_state = np.random.randint(0, 10, size=2 * self.K)
+        logger.debug(f"Initialized order book state: {self.order_book_state}")
 
     def update_reference_price(self):
-        # Update the reference price based on the model rules
-        pass
+        if random.random() < self.theta:
+            if self.order_book_state[self.K - 1] == 0:  # If the best ask is empty
+                self.reference_price += self.delta
+                self._shift_order_book('right')
+            elif self.order_book_state[self.K] == 0:  # If the best bid is empty
+                self.reference_price -= self.delta
+                self._shift_order_book('left')
+        logger.debug(f"Updated reference price to {self.reference_price}")
+
+    def _shift_order_book(self, direction: str):
+        if direction == 'right':
+            self.order_book_state[1:] = self.order_book_state[:-1]
+            self.order_book_state[0] = np.random.randint(0, 10)
+        elif direction == 'left':
+            self.order_book_state[:-1] = self.order_book_state[1:]
+            self.order_book_state[-1] = np.random.randint(0, 10)
+        logger.debug(f"Shifted order book {direction}")
 
     def handle_limit_order(self, side: str, level: int, volume: int):
-        # Process a limit order
-        pass
+        if side not in ['bid', 'ask'] or level < 0 or level >= self.K or volume <= 0:
+            raise ValueError("Invalid limit order parameters")
+        index = self.K + level if side == 'bid' else self.K - 1 - level
+        self.order_book_state[index] += volume
+        logger.info(f"Added limit order: side={side}, level={level}, volume={volume}")
 
     def handle_market_order(self, side: str, volume: int):
-        # Process a market order
-        pass
+        if side not in ['bid', 'ask'] or volume <= 0:
+            raise ValueError("Invalid market order parameters")
+        index = self.K if side == 'ask' else self.K - 1
+        self.order_book_state[index] -= min(volume, self.order_book_state[index])
+        logger.info(f"Executed market order: side={side}, volume={volume}")
 
     def handle_cancellation(self, side: str, level: int, volume: int):
-        # Process a cancellation
-        pass
+        if side not in ['bid', 'ask'] or level < 0 or level >= self.K or volume <= 0:
+            raise ValueError("Invalid cancellation parameters")
+        index = self.K + level if side == 'bid' else self.K - 1 - level
+        self.order_book_state[index] = max(0, self.order_book_state[index] - volume)
+        logger.info(f"Cancelled order: side={side}, level={level}, volume={volume}")
 
     def get_intensity(self, event_type: str, side: str, level: int) -> float:
-        # Get the intensity for a specific event type, side, and level
-        pass
+        # This is a placeholder. In a real implementation, you would compute the intensity based on the current state.
+        return random.random()
 
     def simulate_next_event(self) -> Tuple[str, str, int, int]:
-        # Simulate the next event in the order book
-        pass
+        event_type = random.choice(['limit', 'market', 'cancel'])
+        side = random.choice(['bid', 'ask'])
+        level = random.randint(0, self.K - 1)
+        volume = random.randint(1, 10)
+        return event_type, side, level, volume
 
     def run_simulation(self, num_steps: int):
-        # Run the simulation for a specified number of steps
-        pass
+        for _ in range(num_steps):
+            event_type, side, level, volume = self.simulate_next_event()
+            if event_type == 'limit':
+                self.handle_limit_order(side, level, volume)
+            elif event_type == 'market':
+                self.handle_market_order(side, volume)
+            else:
+                self.handle_cancellation(side, level, volume)
+            self.update_reference_price()
+        logger.info(f"Completed simulation of {num_steps} steps")
 
     def get_order_book_state(self) -> List[int]:
-        # Return the current state of the order book
         return self.order_book_state.tolist()
 
     def get_reference_price(self) -> float:
-        # Return the current reference price
         return self.reference_price
 
-
-class IntensityFunction:
-    def __init__(self, function_type: str):
-        self.function_type = function_type
-
-    def __call__(self, queue_size: int) -> float:
-        # Implement the intensity function based on the queue size
-        pass
-
-
-# You might want to create separate classes for different types of intensity functions
-class LimitOrderIntensity(IntensityFunction):
-    pass
-
-
-class CancellationIntensity(IntensityFunction):
-    pass
-
-
-class MarketOrderIntensity(IntensityFunction):
-    pass
+# You might want to add the following classes if you decide to implement them:
+# class IntensityFunction:
+#     def __init__(self, function_type: str):
+#         self.function_type = function_type
+#
+#     def __call__(self, queue_size: int) -> float:
+#         # Implement the intensity function based on the queue size
+#         pass
+#
+# class LimitOrderIntensity(IntensityFunction):
+#     pass
+#
+# class CancellationIntensity(IntensityFunction):
+#     pass
+#
+# class MarketOrderIntensity(IntensityFunction):
+#     pass
