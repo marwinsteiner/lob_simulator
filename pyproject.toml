@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 dynaconf = "^3.2.6"
 numpy = "^2.1.2"
+loguru = "^0.7.2"
 
 
 [build-system]
