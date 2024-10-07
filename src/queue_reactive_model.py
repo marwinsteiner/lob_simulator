@@ -152,3 +152,18 @@ class OrderBook:
                 order)  # if it's not a buy order it must be a sell order and add it and its price to sell orders
         self.order_id_to_price[id(order)] = price
 
+    def cancel_order(self, order_id: int) -> Optional[Order]:
+        if order_id not in self.order_id_to_price:  # we need an order ID to cancel!
+            return None
+
+        price = self.order_id_to_price[order_id]
+        side = self.bids if price in self.bids else self.asks  # will be bids if the price is in bids else it must be
+        # in asks
+
+        # if we have identified the order in our list of orders, cancel it
+        for i, order in enumerate(side[price]):
+            if id(order) == order_id:
+                del self.order_id_to_price[order_id]
+                return side[price].pop(i)
+
+        return None
