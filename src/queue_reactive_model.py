@@ -168,7 +168,7 @@ class OrderBook:
 
         return None
 
-    def match_market_order(self , order: Order) -> List[Order]:
+    def match_market_order(self, order: Order) -> List[Order]:
         matched_orders = []
         remaining_volume = order.volume
 
@@ -206,4 +206,19 @@ class OrderBook:
         return min(self.asks.keys()) if self.asks else None  # if there are no orders there isn't anything to return
         # (None)
 
+    def get_mid_price(self) -> Optional[float]:
+        best_bid = self.get_best_bid()
+        best_ask = self.get_best_ask()
+        if best_bid is not None and best_ask is not None:
+            return (best_bid + best_ask) / 2
+        return None
 
+    def get_spread(self) -> Optional[float]:
+        best_bid = self.get_best_bid()
+        best_ask = self.get_best_ask()
+        if best_bid is not None and best_ask is not None:
+            return (best_ask - best_bid)
+        return None
+
+    def get_order_book_state(self, levels: int) -> Dict[str, List[Dict[str, float]]]:
+        pass
