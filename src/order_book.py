@@ -20,8 +20,12 @@ class OrderBook:
         """Get the queue size at a specific level."""
         return self.queue_sizes.get((side, level), 0)
 
-    def update_reference_price(self):
-        pass
+    def update_reference_price(self, new_price: float):
+        """Update reference price and shift queues if necessary."""
+        price_change = round((new_price - self.reference_price) / self.tick_size)
+        if price_change != 0:
+            self._shift_queues(price_change)  # TODO: implement this helper
+            self.reference_price = new_price
 
     def get_best_bid(self):
         pass
@@ -37,4 +41,3 @@ class OrderBook:
 
     def get_order_book(self):
         pass
-
