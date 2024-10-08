@@ -221,4 +221,15 @@ class OrderBook:
         return None
 
     def get_order_book_state(self, levels: int) -> Dict[str, List[Dict[str, float]]]:
-        pass
+        state = {'bids': [], 'asks': []}
+
+        bid_prices = sorted(self.bids.keys(), reverse=True)[:levels]
+        ask_prices = sorted(self.asks.keys())[:levels]
+
+        for price in bid_prices:
+            state['bids'].append({'price': price, 'volume': self.get_volume_at_price(OrderSide.BUY, price)})
+            # TODO: Implement the get_volume_at_price method.
+        for price in ask_prices:
+            state['asks'].append({'price': price, 'volume': self.get_volume_at_price(OrderSide.SELL, price)})
+            # TODO: Implement the get_volume_at_price method.
+        return state
