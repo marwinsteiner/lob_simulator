@@ -10,12 +10,15 @@ class OrderBook:
         self.reference_price = 0.0
         self.queue_sizes = defaultdict(int)  # store queue sizes for each price level
 
-    def update_queue_size(self):
-        """Update the queue siz at a specific price level."""
-        pass
+    def update_queue_size(self, side: OrderSide, level: int, change: int):
+        """Update the queue siz at a specific level."""
+        key = (side, level)
+        self.queue_sizes[key] += change
+        self.queue_sizes[key] = max(0, self.queue_sizes[key])  # queue size can never be negative
 
-    def get_queue_sizes(self):
-        pass
+    def get_queue_sizes(self, side: OrderSide, level: int) -> int:
+        """Get the queue size at a specific level."""
+        return self.queue_sizes.get((side, level), 0)
 
     def update_reference_price(self):
         pass
