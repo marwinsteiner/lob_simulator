@@ -16,7 +16,7 @@ class OrderBook:
         self.queue_sizes[key] += change
         self.queue_sizes[key] = max(0, self.queue_sizes[key])  # queue size can never be negative
 
-    def get_queue_sizes(self, side: OrderSide, level: int) -> int:
+    def get_queue_size(self, side: OrderSide, level: int) -> int:
         """Get the queue size at a specific level."""
         return self.queue_sizes.get((side, level), 0)
 
@@ -27,17 +27,39 @@ class OrderBook:
             self._shift_queues(price_change)  # TODO: implement this helper
             self.reference_price = new_price
 
-    def get_best_bid(self):
-        pass
+    def get_best_bid(self) -> Optional[float]:
+        for level in range(self.K):
+            if self.get_queue_size(OrderSide.BUY, level) > 0:
+                return self.reference_price - level * self.tick_size
 
-    def get_best_ask(self):
-        pass
+    def get_best_ask(self) -> Optional[float]:
+        for level in range(self.K):
+            if self.get_queue_size(OrderSide.SELL, level) > 0:
+                return self.reference_price + level * self.tick_size
 
-    def get_mid_price(self):
-        pass
+    def get_mid_price(self) -> Optional[float]:
+        best_bid = self.get_best_bid()
+        best_ask = self.get_best_ask()
+        if best_bid is not None and best_ask is not None:
+            return (best_bid + best_ask) / 2
+        return None
 
-    def get_spread(self):
-        pass
+    def get_spread(self) -> Optional[float]:
+        best_bid = self.get_best_bid()
+        best_ask = self.get_best_ask()
+        if best_bid is not None and best_ask is not None:
+            return best_ask - best_bid
+        return None
 
     def get_order_book(self):
-        pass
+        state = {'bids': [], 'asks': []}
+        for level in range(self.K):
+            bid_price = self.reference_price - level + self.tick_size
+            ask_price = self.reference_price + level * self.tick_size
+            bid_size = self.queue_sizes[(OrderSide.BUY, level)]
+            ask_size = self.queue_sizes[(OrderSide.SELL, level)]
+            if bid_price > 0:
+                state['bids'].append({'price': bid_price, 'size': bid_size})
+            if ask_price > 0:
+                state['asks'].append({'price': ask_price, 'size': ask_size})
+        return state
