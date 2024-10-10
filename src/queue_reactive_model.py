@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from loguru import logger
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Union
 from src.intensity_functions import create_intensity_function
 from src.orders import Order, OrderType, OrderSide
 from collections import defaultdict
@@ -19,7 +19,8 @@ class QueueReactiveModel:
         self.theta = theta  # Probability of reference price change
         self.theta_reinit = theta_reinit  # Probability of LOB state reinitialization
         self.reference_price = 0.0
-        self.order_book_state = np.zeros(2 * K, dtype=int)
+        self.order_book_state: Union[np.ndarray, int] = np.zeros(2*K, dtype=int)
+
 
         self.limit_order_intensity = create_intensity_function('limit_order', base_intensity=1.0, alpha=0.5)
         self.cancellation_intensity = create_intensity_function('cancellation', mu=0.1)
@@ -62,7 +63,7 @@ class QueueReactiveModel:
         if side not in ['bid', 'ask'] or volume <= 0:
             raise ValueError("Invalid market order parameters")
         index = self.K if side == 'ask' else self.K - 1
-        self.order_book_state[index] -= min(volume, self.order_book_state[index])
+        self.order_book_state[index] = max(0, self.order_book_state[index] - volume)
         logger.info(f"Executed market order: side={side}, volume={volume}")
 
     def handle_cancellation(self, side: str, level: int, volume: int):
@@ -111,22 +112,3 @@ class QueueReactiveModel:
 
     def get_reference_price(self) -> float:
         return self.reference_price
-
-
-# might want to implement the following classes asp:
-# class IntensityFunction:
-#     def __init__(self, function_type: str):
-#         self.function_type = function_type
-#
-#     def __call__(self, queue_size: int) -> float:
-#         # Implement the intensity function based on the queue size
-#         pass
-#
-# class LimitOrderIntensity(IntensityFunction):
-#     pass
-#
-# class CancellationIntensity(IntensityFunction):
-#     pass
-#
-# class MarketOrderIntensity(IntensityFunction):
-#     pass
