@@ -35,17 +35,18 @@ class Simulator:
         event_type = random.choices(['limit', 'market', 'cancel'], weights=[0.6, 0.2, 0.2])[0]
         side = random.choice([OrderSide.BUY, OrderSide.SELL])  # proxy: stoch proc to model?
         level = random.randint(0, self.model.K - 1)
-        volume = random.randint(1,10)  # proxy: essentially too basic, maybe look at a stoch proc to model this?
+        volume = random.randint(1, 10)  # proxy: essentially too basic, maybe look at a stoch proc to model this?
         return event_type, side, level, volume
 
     def _process_event(self, event: Tuple[str, OrderSide, int, int]):
         event_type, side, level, volume = event
+        side_str = 'bid' if side == OrderSide.BUY else 'ask'
         if event_type == 'limit':
-            self.model.handle_limit_order(str(side), level, volume)
+            self.model.handle_limit_order(side_str, level, volume)
         elif event_type == 'market':
-            self.model.handle_market_order(str(side), level)
+            self.model.handle_market_order(side_str, volume)
         elif event_type == 'cancel':
-            self.model.handle_cancellation(str(side), level, volume)
+            self.model.handle_cancellation(side_str, level, volume)
 
     def _update_order_book(self):
         # update reference price
@@ -66,3 +67,8 @@ class Simulator:
             'spread': self.order_book.get_spread(),
             'order_book_state': self.order_book.get_order_book_state()
         }
+
+
+if __name__ == '__main__':
+    simulator = Simulator(K=5, delta=0.01, theta=0.1, theta_reinit=0.05)
+    results = simulator.run_simulation(num_steps=10000)
