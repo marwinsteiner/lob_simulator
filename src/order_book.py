@@ -24,7 +24,7 @@ class OrderBook:
         """Update reference price and shift queues if necessary."""
         price_change = round((new_price - self.reference_price) / self.tick_size)
         if price_change != 0:
-            self._shift_queues(price_change)  # TODO: implement this helper
+            self._shift_queues(price_change)
             self.reference_price = new_price
 
     def get_best_bid(self) -> Optional[float]:
@@ -63,3 +63,12 @@ class OrderBook:
             if ask_price > 0:
                 state['asks'].append({'price': ask_price, 'size': ask_size})
         return state
+
+    def _shift_queues(self, shift: int):
+        """Shift queue sizes when ref price changes."""
+        new_queues = defaultdict(int)
+        for (side, level), size in self.queue_sizes.items():
+            new_level = level - shift if side == OrderSide.BUY else level + shift
+            if 0 <= new_level < self.K:
+                new_queues[(side, new_level)] = size
+            self.queue_sizes = new_queues
