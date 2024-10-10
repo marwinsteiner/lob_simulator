@@ -51,7 +51,7 @@ class OrderBook:
             return best_ask - best_bid
         return None
 
-    def get_order_book(self):
+    def get_order_book_state(self) -> Dict[str, List[Dict[str, float]]]:
         state = {'bids': [], 'asks': []}
         for level in range(self.K):
             bid_price = self.reference_price - level + self.tick_size
