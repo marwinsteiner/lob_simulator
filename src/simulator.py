@@ -41,11 +41,11 @@ class Simulator:
     def _process_event(self, event: Tuple[str, OrderSide, int, int]):
         event_type, side, level, volume = event
         if event_type == 'limit':
-            self.model.handle_limit_order(side, level, volume)
+            self.model.handle_limit_order(str(side), level, volume)
         elif event_type == 'market':
-            self.model.handle_market_order(side, level)
+            self.model.handle_market_order(str(side), level)
         elif event_type == 'cancel':
-            self.model.handle_cancellation(side, level, volume)
+            self.model.handle_cancellation(str(side), level, volume)
 
     def _update_order_book(self):
         # update reference price
@@ -55,7 +55,7 @@ class Simulator:
         # update queue sizes
         for side in [OrderSide.BUY, OrderSide.SELL]:
             for level in range(self.model.K):
-                queue_size = self.model.get_queue_size(side, level)
+                queue_size = self.model.get_queue_size(str(side), level)
                 self.order_book.update_queue_size(side, level, queue_size - self.order_book.get_queue_size(side, level))
 
     def _get_current_state(self) -> dict:

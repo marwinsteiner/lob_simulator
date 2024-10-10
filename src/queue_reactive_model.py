@@ -1,10 +1,8 @@
 import numpy as np
 import random
 from loguru import logger
-from typing import List, Tuple, Dict, Optional, Union
+from typing import List, Tuple, Union
 from src.intensity_functions import create_intensity_function
-from src.orders import Order, OrderType, OrderSide
-from collections import defaultdict
 
 
 class QueueReactiveModel:
@@ -19,8 +17,7 @@ class QueueReactiveModel:
         self.theta = theta  # Probability of reference price change
         self.theta_reinit = theta_reinit  # Probability of LOB state reinitialization
         self.reference_price = 0.0
-        self.order_book_state: Union[np.ndarray, int] = np.zeros(2*K, dtype=int)
-
+        self.order_book_state: Union[np.ndarray, int] = np.zeros(2 * K, dtype=int)
 
         self.limit_order_intensity = create_intensity_function('limit_order', base_intensity=1.0, alpha=0.5)
         self.cancellation_intensity = create_intensity_function('cancellation', mu=0.1)
